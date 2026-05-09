@@ -1,0 +1,1 @@
+pip install numpy pandas matplotlib requests python-dotenv jupyter

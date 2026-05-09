@@ -1,8 +1,8 @@
 .venv/
+venv/
 __pycache__/
 *.pyc
 .env
-.DS_Store
 .ipynb_checkpoints/
 Challenge/Resources/
 
@@ -26,3 +26,14 @@ env/
 Pipfile.lock
 poetry.lock
 uv.lock
+.DS_Store
+__MACOSX/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.jax_cache/
+outputs/
+outputs_validation/
+plots/
+results/
+Challenge/Resources/
