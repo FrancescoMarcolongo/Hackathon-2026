@@ -1,0 +1,167 @@
+STEP 1 - BASELINE SENZA NOISE
+
+Obiettivo
+Questo output riguarda solo lo step 1 della pipeline: baseline senza noise.
+La baseline era gia stata calcolata nella cartella team-core-bias-optimizer.
+Qui sono stati solo caricati i dati/output gia salvati e sono stati ridisegnati
+i grafici con uno stile grafico piu pulito e adatto a slide.
+
+Nessuna nuova simulazione
+Non sono state eseguite nuove simulazioni Lindblad.
+Non e stato rilanciato Dynamiqs.
+Non e stata rilanciata l'ottimizzazione CMA-ES.
+Non sono stati modificati i dati numerici.
+Non sono stati inventati, interpolati, lisciati o alterati i dati.
+Le curve sono i punti reali gia presenti nei file salvati.
+
+File sorgente caricati
+I dati sono caricati da:
+
+- team-core-bias-optimizer/results/final_validated_epoch_trace.csv
+  Fonte principale per i quattro grafici. Contiene la traiettoria validata della
+  run selezionata, una riga per epoca, con le colonne incumbent_*.
+
+- team-core-bias-optimizer/results/baseline_vs_optimized.csv
+  Tabella di controllo con challenge_baseline, optimization_start e optimized.
+  Usata per documentare il contenuto scientifico e verificare i valori finali.
+
+- team-core-bias-optimizer/results/best_candidate.json
+  Metadata della run gia prodotta, inclusi target_bias = 100.0,
+  bias_tol_rel = 0.03, configurazione reward e curve gia salvate.
+
+Sono stati consultati anche team-core-bias-optimizer/validation_report.md e
+team-core-bias-optimizer/README.md per identificare il contesto della run.
+
+Grafici baseline identificati
+Nella cartella team-core-bias-optimizer/figures erano gia presenti:
+
+- final_reward_or_loss_vs_epoch
+- final_bias_vs_epoch
+- final_lifetimes_vs_epoch
+- final_parameters_vs_epoch
+- baseline_decay_fits
+- optimized_decay_fits
+- sweep_summary_proxy
+
+Per questo step sono stati ricreati i quattro grafici richiesti dalla pipeline
+logica dello step 1:
+
+1. reward che converge;
+2. bias che converge al target;
+3. T_X e T_Z lungo le epoche;
+4. parametri di controllo lungo le epoche.
+
+I grafici baseline_decay_fits, optimized_decay_fits e sweep_summary_proxy sono
+diagnostici/ausiliari della run originale e non fanno parte dei quattro grafici
+richiesti esplicitamente per lo step 1.
+
+Figure prodotte
+La cartella contiene le seguenti coppie PNG/PDF:
+
+- 01_reward_convergence.png / 01_reward_convergence.pdf
+- 02_bias_convergence.png / 02_bias_convergence.pdf
+- 03_lifetimes_convergence.png / 03_lifetimes_convergence.pdf
+- 04_parameter_convergence.png / 04_parameter_convergence.pdf
+
+Come rigenerare le figure
+Da questa cartella:
+
+python3 plot_baseline_style.py
+
+Lo script legge solo i file gia presenti in team-core-bias-optimizer/results e
+risalva le figure. Non importa cat_model.py, non importa Dynamiqs e non chiama
+funzioni di simulazione.
+
+Descrizione dei grafici
+
+1. Reward convergence
+Asse x: epoca.
+Asse y: incumbent_reward validato.
+Curva: reward del miglior incumbent validato lungo le epoche.
+Linea grigia tratteggiata: reward zero, solo come riferimento visivo.
+Il grafico mostra il miglioramento della reward da valori negativi fino a un
+valore finale positivo.
+
+2. Bias convergence to target
+Asse x: epoca.
+Asse y: bias eta = T_Z / T_X.
+Curva blu: incumbent_bias validato lungo le epoche.
+Linea rossa tratteggiata: target eta = 100.
+Banda rossa leggera: intervallo target 97-103, derivato da bias_tol_rel = 0.03.
+La banda e una guida grafica, non modifica i dati.
+
+3. Validated lifetimes
+Asse x: epoca.
+Asse y: lifetime in us, con scala logaritmica.
+Curva teal: T_X validato.
+Curva viola: T_Z validato.
+La scala log e stata mantenuta per rendere leggibili nello stesso pannello
+quantita con ordini di grandezza diversi.
+
+4. Control-parameter convergence
+Asse x: epoca.
+Asse y: valore del parametro.
+Curve:
+- Re(g_2)
+- Im(g_2)
+- Re(epsilon_d)
+- Im(epsilon_d)
+Sono i quattro controlli reali dell'ottimizzazione gia calcolata.
+
+Scelte grafiche comuni
+Lo stile scelto deve essere riusato negli step successivi per mantenere
+coerenza visiva nella presentazione.
+
+- Formato figura: 7.6 x 4.28 inch, circa 16:9.
+- Raster: PNG a 320 DPI, sfondo bianco.
+- Vettoriale: PDF con font type 42, adatto a slide.
+- Font: DejaVu Sans.
+- Dimensioni font:
+  titolo 13 pt semibold;
+  label assi 11 pt;
+  tick 9.5 pt;
+  legenda 9.5 pt.
+- Linewidth principale: 2.45.
+- Linewidth parametri: 2.25.
+- Marker: visibili ma discreti, size 4.8, riempimento bianco, bordo 1.2.
+- Marker mostrati ogni circa 1/9 della serie per evitare affollamento.
+- Griglia: solo major grid, grigio chiaro #D5DAE1, alpha 0.72, linewidth 0.75.
+- Assi: spine top/right rimosse; spine left/bottom grigio scuro #263238.
+- Legenda: frame bianco leggero, bordo #E5E7EB, senza effetti decorativi.
+- Titoli: brevi, allineati a sinistra, pensati per slide.
+- Testo accessorio ridotto al minimo: l'informazione su sorgenti e assenza di
+  nuove simulazioni e documentata in questo file, non dentro le figure.
+
+Palette colori
+La palette e sobria, colorblind-friendly e non dipende da un singolo colore:
+
+- testo/assi: #263238
+- griglia: #D5DAE1
+- reward: #B7791F
+- bias: #2563EB
+- target: #D1495B
+- T_X: #008B8B
+- T_Z: #6D3FB2
+- Re(g_2): #1F4E79
+- Im(g_2): #2A9D8F
+- Re(epsilon_d): #E09F3E
+- Im(epsilon_d): #C04ABC
+- riferimento zero: #98A2B3
+
+Perche questo stile e adatto agli step successivi
+Lo stile e stabile per confronti futuri perche:
+
+- usa dimensioni 16:9 coerenti con slide;
+- separa bene dati, target e riferimenti;
+- usa linee spesse e marker discreti, leggibili anche su proiettore;
+- mantiene griglia leggera senza appesantire il grafico;
+- usa colori distinguibili per curve multiple;
+- evita elementi decorativi non informativi;
+- funziona sia per grafici singoli sia per confronti tra algoritmi;
+- salva sempre PNG ad alta risoluzione e PDF vettoriale.
+
+Quando negli step successivi si confronteranno algoritmi diversi, mantenere
+questo stesso set di font, dimensioni, palette, linewidth, griglia, legenda,
+DPI e formato figura. Aggiungere nuove curve scegliendo colori dalla stessa
+famiglia visiva, mantenendo il target eta = 100 in rosso #D1495B quando
+presente.

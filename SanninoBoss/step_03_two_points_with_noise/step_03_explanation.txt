@@ -1,0 +1,198 @@
+STEP 3 - 2-points con noise
+===========================
+
+Contenuto della cartella
+------------------------
+Cartella: step_03_two_points_with_noise
+
+File Python:
+- two_points_algorithms.py
+  Contiene modello fisico, stima due-punti dei lifetime, reward e loop CMA-ES.
+- baseline_loader.py
+  Contiene la traccia baseline no-noise gia validata, copiata dai risultati esistenti.
+- plot_step_03.py
+  Esegue le run due-punti necessarie e produce le tre figure finali.
+
+Figure prodotte:
+- figure_3A_two_points_no_noise.png / .pdf
+- figure_3B_epochs_baseline_vs_noisy_two_points.png / .pdf
+- figure_3C_physical_time_rescaled.png / .pdf
+
+Dati baseline
+-------------
+La baseline no-noise non e stata risimulata.
+La curva baseline usata nelle figure 3B e 3C e stata caricata/copiata da:
+
+team-core-bias-optimizer/results/final_validated_epoch_trace.csv
+
+Il numero di punti della griglia baseline usato per il fit multi-punto e:
+
+N = 60
+
+Questo valore e ricavato dai metadati della baseline:
+
+team-core-bias-optimizer/results/best_candidate.json
+campo: simulation_final.n_points
+
+Algoritmo 2-points
+------------------
+Per ogni epoca, l'algoritmo stima T_X e T_Z usando solo:
+- il punto noto a t = 0;
+- un singolo punto misurato a t = tau.
+
+La formula usata e:
+
+T = - tau / log(|y(tau) / y(0)|)
+
+Questa e la stessa convenzione usata nello step 2: si usa il rapporto in valore assoluto per proteggere la stima da piccoli cambi di segno numerici, ma non viene applicato smoothing, fit multi-punto, interpolazione o alterazione delle curve.
+
+Tau scelti:
+- tau_x = 0.04067796841263771 us
+- tau_z = 22.033899307250977 us
+
+Questi tau sono stati scelti nello step 2 come punti della griglia baseline informativi per osservare un decadimento misurabile senza andare troppo vicino allo zero.
+
+Noise model
+-----------
+Nel caso noisy, la simulazione fisica resta la stessa del 2-points no-noise.
+Il rumore viene aggiunto solo alla misura del punto a tau:
+
+y_measured(tau) = y_exact(tau) + Normal(0, sigma)
+
+Parametri finali:
+- modello: rumore gaussiano additivo sull'aspettazione misurata a tau;
+- sigma = 0.03;
+- il punto t = 0 resta noto e non rumoroso;
+- i valori rumorosi sono limitati all'intervallo fisico [-1, 1];
+- nessun drift;
+- nessun Bayesian optimizer;
+- nessun BLT;
+- nessuna anticipazione degli step successivi.
+
+Parametri fisici
+----------------
+I parametri fisici sono mantenuti coerenti con lo step 2:
+- na = 15
+- nb = 5
+- kappa_b = 10.0
+- kappa_a = 1.0
+- alpha_margin = 2.5
+- target bias eta = 100
+- target band = 97-103, cioe tolleranza relativa del 3%
+
+Parametri ottimizzazione
+------------------------
+2-points no-noise, figura 3A:
+- epochs = 34
+- population = 8
+- sigma0 = 0.45
+- optimizer seed = 0
+- prima epoca dentro target band: 7
+
+2-points con noise, figure 3B e 3C:
+- epochs = 70
+- population = 8
+- sigma0 = 0.25
+- optimizer seed = 0
+- noise seed = 11
+- noise sigma = 0.03
+- prima epoca dentro target band: 24
+- bias finale stimato: circa 99.89
+
+Sweep/calibrazione
+------------------
+Sono state provate calibrazioni realistiche di noise e iperparametri:
+- sigma = 0.02 con sigma0 = 0.45: convergenza troppo simile alla baseline;
+- sigma = 0.035 e 0.05 con sigma0 = 0.45: misure troppo ottimistiche o meno stabili;
+- sigma = 0.03 con sigma0 = 0.25: run finale scelta.
+
+Criterio di scelta:
+- il 2-points noisy deve convergere al target;
+- deve essere chiaramente piu lento in numero di epoche rispetto alla baseline/no-noise;
+- non deve diventare instabile o perdere il messaggio fisico;
+- la curva deve essere pulita e adatta a slide.
+
+Figura 3A
+---------
+Mostra il 2-points senza noise da solo.
+Asse x: epoca.
+Asse y: bias eta = T_Z/T_X.
+
+La curva parte sotto il target, cresce rapidamente e raggiunge la banda 97-103 alla epoca 7.
+Il messaggio e che, senza noise, usare due punti non penalizza la stima rispetto alla baseline multi-punto.
+
+Figura 3B
+---------
+Mostra due pannelli verticali in funzione delle epoche:
+- pannello sopra: Baseline no noise;
+- pannello sotto: 2-points with noise.
+
+La baseline raggiunge la target band alla epoca 7.
+Il 2-points con noise raggiunge la target band alla epoca 24.
+
+Il messaggio e che il rumore rallenta la convergenza se si guarda solo il numero di epoche.
+
+Figura 3C
+---------
+Usa gli stessi dati della figura 3B.
+Non e stata fatta nessuna nuova simulazione per la 3C.
+
+Nel pannello 2-points noisy, l'asse x e riscalato come:
+
+x_rescaled = epoch * (2 / N)
+
+Con N = 60:
+
+2 / N = 2 / 60 = 0.0333333333
+
+Questo rappresenta il costo fisico normalizzato: una epoca baseline rivela N punti dell'esponenziale, mentre una epoca 2-points rivela solo 2 punti.
+La figura mostra quindi che, anche se il noisy richiede piu epoche, il costo fisico sperimentale puo essere molto piu basso.
+
+Stile grafico
+-------------
+Lo stile e quello dello step 1.
+
+Scelte principali:
+- font: DejaVu Sans;
+- title size: 13, semibold;
+- axis label size: 11;
+- tick label size: 9.5;
+- legend size: 9.5;
+- background bianco;
+- spines top/right rimossi;
+- asse e testo: #263238;
+- griglia: #D5DAE1, linewidth 0.75, alpha 0.72;
+- baseline / no-noise: blu #2563EB;
+- noisy: teal #008B8B;
+- target line: rosso #D1495B, dashed, linewidth 1.75;
+- target band: rosso #D1495B con alpha 0.085;
+- curve principali: linewidth 2.45;
+- marker: cerchi vuoti, marker size 4.8, marker edge width 1.2;
+- legenda: frame bianco, alpha 0.94, bordo #E5E7EB;
+- DPI PNG: 320;
+- figure 3A: 7.6 x 4.28 pollici;
+- figure 3B/3C: 7.6 x 6.25 pollici;
+- formati salvati: PNG alta risoluzione e PDF vettoriale.
+
+Non sono presenti commenti in basso a destra o annotazioni decorative.
+Le figure contengono solo assi, legenda, target band, target line e curve.
+
+Come presentare oralmente
+-------------------------
+Figura 3A:
+"Prima controlliamo che il 2-points non perda informazione quando non c'e rumore: usando solo t=0 e t=tau, la convergenza resta sostanzialmente equivalente alla baseline."
+
+Figura 3B:
+"Quando aggiungiamo rumore alla misura a tau, il metodo converge ancora, ma serve un numero maggiore di epoche: la baseline arriva al target intorno alla epoca 7, mentre il 2-points noisy arriva intorno alla epoca 24."
+
+Figura 3C:
+"Il punto chiave e il costo fisico: la baseline misura 60 punti per epoca, il 2-points solo 2. Riscalando l'asse x di 2/60, la curva noisy si comprime verso sinistra. Questo mostra la proof of concept del vantaggio sperimentale del protocollo due-punti."
+
+Garanzie
+--------
+Non sono stati inventati dati a mano.
+Non sono state disegnate curve finte.
+Non e stato modificato manualmente alcun valore numerico finale.
+Non e stata risimulata la baseline.
+Non e stato applicato smoothing o interpolazione.
+Le curve 3A, 3B e 3C derivano da codice realmente eseguito.

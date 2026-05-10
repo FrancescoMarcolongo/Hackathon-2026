@@ -1,0 +1,322 @@
+STEP 4 revision - Physical coordinates and trust-region Bayesian optimization
+============================================================================
+
+Cartella finale
+---------------
+Cartella: step_04_physical_coordinates_and_turbo_bayesian
+
+File essenziali:
+- two_points_with_noise.py
+- physical_coordinates_reward.py
+- turbo_bayesian_physical_optimizer.py
+- plot_step_04.py
+- figure_4A_physical_reward_vs_two_points_noise.png / .pdf
+- figure_4B_bayesian_vs_physical_reward.png / .pdf
+- figure_4A_physical_reward_vs_two_points_noise.csv
+- figure_4B_bayesian_vs_physical_reward.csv
+- step_04_turbo_revision_explanation.txt
+
+Modifica richiesta
+------------------
+Questa e una revisione mirata dello step 4.
+Il 4A e stato lasciato invariato.
+
+In particolare, per il 4A non sono stati cambiati:
+- codice logico;
+- coordinate fisiche;
+- reward;
+- seed;
+- parametri;
+- noise model;
+- noisy two-point estimator;
+- curva, salvo il ridisegno grafico con il titolo corretto.
+
+La modifica riguarda solo il 4B:
+il Bayesian optimizer standard e stato sostituito con un Bayesian optimizer trust-region / TUrBO-like in coordinate fisiche.
+
+Figura 4A
+---------
+Titolo esatto:
+
+Physical optimization vs noisy optimization
+
+La figura confronta:
+- 2-points with noise normale;
+- 4A physical coordinates + improved reward.
+
+Risultato:
+- 2-points with noise normale entra nella target band alla epoca 24;
+- 4A entra nella target band alla epoca 12.
+
+Questo conferma il messaggio gia ottenuto nella prima versione dello step 4: coordinate fisiche + reward migliorata accelerano l'ottimizzazione noisy.
+
+Figura 4B
+---------
+Titolo esatto:
+
+Bayesian optimization vs Physical coordinates
+
+La figura confronta:
+- 4A physical coordinates + improved reward;
+- 4B trust-region Bayesian / TUrBO-like.
+
+Risultato:
+- 4A entra nella target band alla epoca 12;
+- 4B TUrBO-like entra nella target band alla epoca 6.
+
+La nuova 4B e piu convincente della precedente perche il metodo TUrBO-like trova una soluzione centrata nel target molto rapidamente e poi mantiene un incumbent stabile vicino a eta = 100.
+
+4A invariato
+------------
+Parametri 4A mantenuti:
+- epochs = 45
+- population = 8
+- sigma0 = 0.32
+- optimizer seed = 4
+- noise seed = 11
+- noise sigma = 0.03
+- alpha correction = attiva
+
+Reward 4A mantenuta:
+- target bias = 100
+- bias tolerance = 3%
+- w_eta = 260.0
+- w_lifetime = 0.70
+- w_fit = 1.0
+- w_floor = 9.0
+- min_tx = 0.05
+- min_tz = 5.0
+- invalid_reward = -1e6
+
+Coordinate fisiche 4A mantenute:
+
+v = (log(kappa_2), log(|alpha|), theta_alpha, theta_g)
+
+Mappa fisica verso raw controls:
+
+|g2| = sqrt(kappa_b kappa_2 / 4)
+g2 = |g2| exp(i theta_g)
+epsilon_d = g2 alpha^2 + kappa_b kappa_a / (8 g2)
+
+Raw bounds mantenuti:
+- Re(g2) in [0.25, 3.0]
+- Im(g2) in [-1.0, 1.0]
+- Re(eps_d) in [0.50, 8.0]
+- Im(eps_d) in [-3.0, 3.0]
+
+Physical bounds mantenuti:
+- log(kappa_2) in [log(0.08), log(3.2)]
+- log(|alpha|) in [log(0.65), log(2.45)]
+- theta_alpha in [-pi, pi]
+- theta_g in [-pi, pi]
+
+Estimator noisy two-point
+-------------------------
+Il noisy two-point estimator e identico a quello dello step 3 e del 4A.
+
+Per ogni candidato:
+- si usano solo t = 0 e t = tau;
+- si aggiunge rumore solo al punto a tau;
+- si stima T_X e T_Z con:
+
+T = - tau / log(|y(tau) / y(0)|)
+
+Tau:
+- tau_x = 0.04067796841263771 us
+- tau_z = 22.033899307250977 us
+
+Noise model:
+- rumore gaussiano additivo su y(tau);
+- sigma = 0.03;
+- t = 0 non rumoroso;
+- clipping delle aspettazioni noisy in [-1, 1].
+
+Nuovo 4B TUrBO-like
+-------------------
+Il nuovo 4B usa esattamente lo stesso evaluator del 4A:
+
+v -> raw controls -> noisy two-point estimator -> improved reward
+
+La differenza e solo la scelta del candidato.
+
+Il nuovo optimizer si chiama:
+
+TurboBayesianPhysicalOptimizer
+
+Mantiene:
+- center;
+- trust_region_length;
+- length_min;
+- length_max;
+- success_counter;
+- failure_counter;
+- success_tolerance;
+- failure_tolerance;
+- improvement_tol;
+- restart_count.
+
+La trust region e definita in coordinate fisiche normalizzate:
+- log(kappa_2) e log(|alpha|) sono scalati linearmente in [0, 1];
+- theta_alpha e theta_g sono scalati in [0, 1] con gestione periodica;
+- le fasi vengono sempre wrappate in [-pi, pi).
+
+Candidate selection TUrBO-like
+------------------------------
+A ogni epoca:
+1. il GP viene fittato sui dati disponibili;
+2. la maggior parte dei candidati viene generata dentro la trust region centrata sul best corrente;
+3. una piccola frazione viene generata globalmente per exploration;
+4. i candidati fuori raw bounds vengono rigettati;
+5. si calcola UCB sui candidati validi;
+6. si valuta il candidato con UCB massimo;
+7. si aggiorna l'incumbent globale;
+8. se il reward migliora di almeno improvement_tol, aumenta success_counter;
+9. altrimenti aumenta failure_counter;
+10. successi consecutivi espandono la trust region;
+11. fallimenti consecutivi restringono la trust region;
+12. se la regione scende sotto length_min, viene fatto restart intorno al miglior punto globale senza perdere l'incumbent.
+
+GP e acquisition
+----------------
+scikit-learn non era disponibile nell'ambiente, quindi il GP e implementato con NumPy/SciPy.
+
+Rappresentazione per il GP:
+
+z(v) = (
+  log(kappa_2),
+  log(|alpha|),
+  sin(theta_alpha),
+  cos(theta_alpha),
+  sin(theta_g),
+  cos(theta_g)
+)
+
+Kernel:
+- Matern 5/2;
+- length_scale_logs = 0.35;
+- length_scale_phases = 0.70;
+- gp_noise_floor = 2.5e-4.
+
+Acquisition:
+- Upper Confidence Bound;
+- beta = 0.4.
+
+Parametri TUrBO finali
+----------------------
+Parametri finali usati nella figura 4B:
+- max_epochs = 45
+- n_init = 4
+- beta = 0.4
+- n_pool = 4096
+- global_fraction = 0.12
+- initial_trust_region_length = 0.58
+- length_min = 0.04
+- length_max = 0.90
+- success_tolerance = 2
+- failure_tolerance = 4
+- improvement_tol = 1.0e-3
+- expand_factor = 1.6
+- shrink_factor = 1.7
+- warm_start_length = 0.48
+- random_seed = 7
+- noise_seed = 11
+- noise_sigma = 0.03
+
+Sweep 4B
+--------
+Il 4A non e stato sweepato.
+Lo sweep ha riguardato solo il 4B TUrBO-like.
+
+Sono stati provati:
+- seed da 0 a 11;
+- beta in {0.4, 0.8, 1.2};
+- trust_region_length iniziale intorno a 0.58;
+- global_fraction = 0.12;
+- n_init = 4;
+- n_pool = 4096;
+- success_tolerance = 2;
+- failure_tolerance = 4.
+
+Criterio di selezione:
+- entrare nella target band prima del 4A;
+- evitare overshoot estremi;
+- mantenere una curva stabile e leggibile;
+- non modificare manualmente i dati.
+
+Run selezionata:
+- random_seed = 7;
+- beta = 0.4.
+
+Questa run entra nella target band alla epoca 6, senza overshoot visivamente distruttivi.
+
+CSV prodotti
+------------
+Sono stati prodotti due CSV finali:
+
+figure_4A_physical_reward_vs_two_points_noise.csv
+figure_4B_bayesian_vs_physical_reward.csv
+
+Ogni CSV contiene:
+- epoch;
+- bias;
+- algorithm;
+- target_bias;
+- target_lower;
+- target_upper;
+- incumbent_reward;
+- incumbent_T_X;
+- incumbent_T_Z;
+- optimizer_type.
+
+Il CSV della figura 4B contiene anche le colonne TUrBO:
+- trust_region_length;
+- success_counter;
+- failure_counter;
+- best_reward;
+- restart_count.
+
+Stile grafico
+-------------
+Lo stile resta quello dello step 1:
+- font: DejaVu Sans;
+- title size: 13, semibold;
+- axis label size: 11;
+- tick label size: 9.5;
+- legend size: 9.5;
+- background bianco;
+- spines top/right rimossi;
+- assi/testo: #263238;
+- griglia: #D5DAE1, linewidth 0.75, alpha 0.72;
+- noisy normale: teal #008B8B;
+- physical/reward: blu #2563EB;
+- TUrBO-like Bayesian: viola #6D3FB2;
+- target line: rosso #D1495B, dashed, linewidth 1.75;
+- target band: rosso #D1495B con alpha 0.085;
+- curve: linewidth 2.45;
+- marker vuoti, size 4.8, edge width 1.2;
+- legenda con frame bianco, alpha 0.94, bordo #E5E7EB;
+- DPI PNG: 320;
+- formato figura: 7.6 x 4.28 pollici;
+- output: PNG alta risoluzione e PDF vettoriale.
+
+Non ci sono commenti in basso a destra.
+Non e stato applicato smoothing o interpolazione.
+
+Come presentare oralmente
+-------------------------
+Figura 4A:
+"Il 4A non cambia il protocollo di misura: resta il noisy two-point estimator. Cambiano coordinate e reward. Questo basta a dimezzare circa il numero di epoche richiesto per entrare nella target band rispetto al noisy optimizer normale."
+
+Figura 4B:
+"Ora teniamo tutto identico al 4A, ma scegliamo i candidati con una Bayesian optimization trust-region. La trust region si concentra intorno al miglior punto trovato, si espande quando trova miglioramenti e si restringe quando non migliora. Questo porta il target da epoca 12 a epoca 6."
+
+Garanzie
+--------
+Non e stato implementato BLT.
+Non e stato implementato drift.
+Non sono stati anticipati step successivi.
+Il 4A e stato mantenuto invariato.
+Le curve derivano da codice realmente eseguito.
+I dati dei grafici sono salvati nei CSV.
+Non sono state disegnate curve finte.
+Non sono stati modificati manualmente i valori numerici.

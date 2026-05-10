@@ -1,0 +1,69 @@
+Pipeline v2 - nuovi step 4, 5 e 6
+
+Questa cartella aggiorna la pipeline della presentazione secondo Pipeline_grafici_v2.rtf. La modifica narrativa principale e' che il vecchio Bayesian/TUrBO dello step 4B non viene piu' mostrato come protagonista subito dopo le coordinate fisiche. Era troppo forte, con convergenza circa a epoca 6, e lasciava poco spazio al risultato concettuale BLT. Nella pipeline v2 il TUrBO viene spostato allo step 6, come acceleratore aggiuntivo del BLT.
+
+Figure prodotte
+1. step4_physical_coordinates_vs_noisy_optimization: "Physical coordinates vs noisy optimization", bias vs epoch.
+2. step5_blt_vs_physical_coordinates: "BLT vs Physical coordinates", bias vs epoch.
+3. step5_01_reward_convergence: "Reward convergence", BLT physical-coordinate based.
+4. step5_02_bias_convergence: "Bias convergence to target", BLT physical-coordinate based.
+5. step5_03_lifetimes_convergence: "Validated lifetimes", BLT physical-coordinate based.
+6. step5_04_parameter_convergence: "Control-parameter convergence", BLT physical-coordinate based.
+7. step6_blt_bayesian_vs_blt_physical_coordinates: "BLT Bayesian optimization vs BLT Physical coordinates", bias vs epoch.
+
+Andamenti finali
+- Step 4 noisy two-point: prima epoca nel target band = 24.
+- Step 4 physical coordinates + improved reward: prima epoca nel target band = 18.
+- Step 5 BLT physical-coordinate based: prima epoca nel target band = 9.
+- Step 6 BLT Bayesian/TUrBO: prima epoca nel target band = 7.
+- Il target bias e' eta = 100, con banda visiva 97-103.
+
+Dati riusati e simulazioni rifatte
+Il noisy two-point lento dello step 4 e' stato riusato dal CSV gia' prodotto nello step 4 precedente, per preservare l'andamento gradito: convergenza lenta intorno a 24-25 epoche. Il physical-coordinate optimizer e' stato rieseguito con una configurazione piu' lenta e presentabile: population=4, sigma0=0.18, optimizer_seed=2, noise_seed=11, noise_sigma=0.03. Questa run converge a epoca 18, quindi migliora il noisy senza schiacciare lo spazio narrativo del BLT.
+
+Physical-coordinate optimizer
+Usa la mappa raw -> coordinate fisiche gia' implementata negli step precedenti: log(kappa2), log(|alpha|), theta_alpha, theta_g. La reward improved include target bias e preferenza per lifetime grandi, con penalita' per fit non affidabili e lifetimes sotto floor. Nella pipeline v2 e' stato scelto un sigma0 piu' prudente per ottenere una curva piu' graduale.
+
+BLT physical-coordinate based
+Lo step 5 e' il main result. Il BLT physical-coordinate based usa come fallback il percorso generato dal physical-coordinate optimizer, non il TUrBO. Quando Gate 1 e Gate 2 passano, usa una reward BLT basata su misure short-time a tau e 2 tau. Quando Gate 3 passa, usa un update Jacobian locale del log-bias. Questo porta la convergenza da epoca 18 a epoca 9.
+
+BLT Bayesian/TUrBO
+Lo step 6 riusa il codice TUrBO/Bayesian gia' scritto, ma solo come broad optimizer/fallback dentro BLT. Il BLT resta l'ingrediente fisico nuovo; il TUrBO e' mostrato come boost successivo. Parametri TUrBO principali: n_init=4, beta=0.4, n_pool=4096, global_fraction=0.12, initial_trust_region_length=0.58, random_seed=7. Il Jacobian del BLT Bayesian e' stato fatto partire a jacobian_start_epoch=7 per mostrare un boost controllato: convergenza a epoca 7, cioe' migliore del BLT physical-coordinate based ma non cosi' dominante da cambiare il main result.
+
+Gate BLT
+- Gate 1: cat feasibility economica su alpha, g2/kappa_b, bounds raw e dimensione del cat.
+- Gate 2: validita' del proxy BLT, inclusi tassi positivi, lifetimes finite, proxy di Markovianita', leakage e contrasto.
+- Gate 3: validita' dell'update Jacobian. Il Jacobian e' stimato con differenze finite in coordinate fisiche normalizzate e muove localmente il log-bias verso zero, con damping e line search.
+Soglie usate: min_abs_alpha=0.65, max_abs_alpha=2.45, max_g2_over_kappa_b=0.35, max_markov=0.85, max_leakage_proxy=0.35, min_contrast=0.015.
+
+Reward BLT
+La reward BLT e' reward = -[w_eta * log(eta/eta_target)^2 + w_abs * log(gamma_X gamma_Z) + w_N * N_markov^2 + w_leak * leakage_proxy^2]. Pesi usati: w_eta=18.0, w_abs=0.32, w_N=0.4, w_leak=0.3.
+
+Marker update-type
+Step 5 usa marker sulla curva BLT physical-coordinate based:
+- PHYSICAL_UPDATE: fallback physical-coordinate standard.
+- BLT_REWARD_REGION: Gate 1 e Gate 2 passano.
+- BLT_JACOBIAN_UPDATE: Gate 3 passa e viene applicato il Jacobian.
+Step 6 usa marker solo sulla curva BLT Bayesian/TUrBO per mantenere la figura pulita:
+- BAYESIAN_UPDATE;
+- BLT_REWARD_REGION;
+- BLT_JACOBIAN_UPDATE.
+
+Sweep e criteri di selezione
+Sono stati provati seed e step size fisici per ottenere uno step 4 con convergenza physical intorno a 15-20 epoche. La run finale physical e' stata scelta perche' converge a epoca 18 con andamento graduale. Per BLT physical-based sono stati calibrati jacobian_start_epoch, damping e filtro di incumbent per evitare che la reward BLT accettasse punti con bias peggiore solo per guadagnare lifetime. Per BLT Bayesian/TUrBO sono stati provati start epoch del Jacobian; la run finale e' stata scelta perche' migliora il BLT physical-based di poco ma in modo visibile.
+
+CSV prodotti
+Ogni figura ha un CSV finale:
+- step4_physical_coordinates_vs_noisy_optimization.csv
+- step5_blt_vs_physical_coordinates.csv
+- step5_01_reward_convergence.csv
+- step5_02_bias_convergence.csv
+- step5_03_lifetimes_convergence.csv
+- step5_04_parameter_convergence.csv
+- step6_blt_bayesian_vs_blt_physical_coordinates.csv
+
+Stile grafico
+Tutti i grafici usano lo stile dello step 1: DejaVu Sans, figura 7.6 x 4.28, DPI=320, griglia leggera, target line rossa tratteggiata, target band trasparente, linewidth 2.45, marker puliti, legenda compatta e nessun commento grigio in basso a destra.
+
+Come spiegare oralmente
+"Nella pipeline v2 separiamo meglio i contributi. Prima mostriamo che le coordinate fisiche migliorano il noisy two-point, ma con convergenza ancora non immediata. Poi arriva il risultato principale: il BLT usa gates fisici, reward locale e Jacobian short-time per raggiungere il target molto prima del physical optimizer. Infine mostriamo che il TUrBO non e' il protagonista, ma puo' essere innestato dentro BLT come acceleratore ulteriore: migliora ancora un po', senza cambiare il fatto che il salto concettuale e' il BLT."

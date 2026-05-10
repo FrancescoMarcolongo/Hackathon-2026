@@ -1,0 +1,73 @@
+epoch,algorithm,reward,update_type,bias,cost_units,cumulative_cost_units,optimizer_type
+0,Bayesian optimization (TUrBO-like),-390.61350566999283,BAYESIAN_UPDATE,28.46957613209257,2.0,2.0,trust-region Bayesian / TUrBO-like
+1,Bayesian optimization (TUrBO-like),-5.099135449893689,BAYESIAN_UPDATE,83.50305560543069,2.0,4.0,trust-region Bayesian / TUrBO-like
+2,Bayesian optimization (TUrBO-like),-5.099135449893689,BAYESIAN_UPDATE,83.50305560543069,2.0,6.0,trust-region Bayesian / TUrBO-like
+3,Bayesian optimization (TUrBO-like),-5.099135449893689,BAYESIAN_UPDATE,83.50305560543069,2.0,8.0,trust-region Bayesian / TUrBO-like
+4,Bayesian optimization (TUrBO-like),-3.8387826888013192,BAYESIAN_UPDATE,85.04222775005506,2.0,10.0,trust-region Bayesian / TUrBO-like
+5,Bayesian optimization (TUrBO-like),-3.8387826888013192,BAYESIAN_UPDATE,85.04222775005506,2.0,12.0,trust-region Bayesian / TUrBO-like
+6,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,14.0,trust-region Bayesian / TUrBO-like
+7,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,16.0,trust-region Bayesian / TUrBO-like
+8,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,18.0,trust-region Bayesian / TUrBO-like
+9,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,20.0,trust-region Bayesian / TUrBO-like
+10,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,22.0,trust-region Bayesian / TUrBO-like
+11,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,24.0,trust-region Bayesian / TUrBO-like
+12,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,26.0,trust-region Bayesian / TUrBO-like
+13,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,28.0,trust-region Bayesian / TUrBO-like
+14,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,30.0,trust-region Bayesian / TUrBO-like
+15,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,32.0,trust-region Bayesian / TUrBO-like
+16,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,34.0,trust-region Bayesian / TUrBO-like
+17,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,36.0,trust-region Bayesian / TUrBO-like
+18,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,38.0,trust-region Bayesian / TUrBO-like
+19,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,40.0,trust-region Bayesian / TUrBO-like
+20,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,42.0,trust-region Bayesian / TUrBO-like
+21,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,44.0,trust-region Bayesian / TUrBO-like
+22,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,46.0,trust-region Bayesian / TUrBO-like
+23,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,48.0,trust-region Bayesian / TUrBO-like
+24,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,50.0,trust-region Bayesian / TUrBO-like
+25,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,52.0,trust-region Bayesian / TUrBO-like
+26,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,54.0,trust-region Bayesian / TUrBO-like
+27,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,56.0,trust-region Bayesian / TUrBO-like
+28,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,58.0,trust-region Bayesian / TUrBO-like
+29,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,60.0,trust-region Bayesian / TUrBO-like
+30,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,62.0,trust-region Bayesian / TUrBO-like
+31,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,64.0,trust-region Bayesian / TUrBO-like
+32,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,66.0,trust-region Bayesian / TUrBO-like
+33,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,68.0,trust-region Bayesian / TUrBO-like
+34,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,70.0,trust-region Bayesian / TUrBO-like
+35,Bayesian optimization (TUrBO-like),0.7675159320903813,BAYESIAN_UPDATE,99.81548988908294,2.0,72.0,trust-region Bayesian / TUrBO-like
+0,BLT hybrid optimizer,-390.61350566999283,BAYESIAN_UPDATE,28.46957613209257,2.0,2.0,BLT-lite hybrid optimizer
+1,BLT hybrid optimizer,-6.067261931297597,BLT_REWARD_REGION,54.23964040766663,4.0,6.0,BLT-lite hybrid optimizer
+2,BLT hybrid optimizer,0.7467870267874546,BLT_JACOBIAN_UPDATE,100.55845016302561,28.0,34.0,BLT-lite hybrid optimizer
+3,BLT hybrid optimizer,0.7467870267874546,BLT_JACOBIAN_UPDATE,100.55845016302561,28.0,62.0,BLT-lite hybrid optimizer
+4,BLT hybrid optimizer,0.7467870267874546,BLT_JACOBIAN_UPDATE,100.55845016302561,28.0,90.0,BLT-lite hybrid optimizer
+5,BLT hybrid optimizer,0.7467870267874546,BLT_JACOBIAN_UPDATE,100.55845016302561,28.0,118.0,BLT-lite hybrid optimizer
+6,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,122.0,BLT-lite hybrid optimizer
+7,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,126.0,BLT-lite hybrid optimizer
+8,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,130.0,BLT-lite hybrid optimizer
+9,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,134.0,BLT-lite hybrid optimizer
+10,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,138.0,BLT-lite hybrid optimizer
+11,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,142.0,BLT-lite hybrid optimizer
+12,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,146.0,BLT-lite hybrid optimizer
+13,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,150.0,BLT-lite hybrid optimizer
+14,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,154.0,BLT-lite hybrid optimizer
+15,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,158.0,BLT-lite hybrid optimizer
+16,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,162.0,BLT-lite hybrid optimizer
+17,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,166.0,BLT-lite hybrid optimizer
+18,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,170.0,BLT-lite hybrid optimizer
+19,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,174.0,BLT-lite hybrid optimizer
+20,BLT hybrid optimizer,0.7467870267874546,BAYESIAN_UPDATE,100.55845016302561,2.0,178.0,BLT-lite hybrid optimizer
+21,BLT hybrid optimizer,0.7467870267874546,BAYESIAN_UPDATE,100.55845016302561,2.0,182.0,BLT-lite hybrid optimizer
+22,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,186.0,BLT-lite hybrid optimizer
+23,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,190.0,BLT-lite hybrid optimizer
+24,BLT hybrid optimizer,0.7467870267874546,BAYESIAN_UPDATE,100.55845016302561,2.0,194.0,BLT-lite hybrid optimizer
+25,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,198.0,BLT-lite hybrid optimizer
+26,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,202.0,BLT-lite hybrid optimizer
+27,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,206.0,BLT-lite hybrid optimizer
+28,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,210.0,BLT-lite hybrid optimizer
+29,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,214.0,BLT-lite hybrid optimizer
+30,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,218.0,BLT-lite hybrid optimizer
+31,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,222.0,BLT-lite hybrid optimizer
+32,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,226.0,BLT-lite hybrid optimizer
+33,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,230.0,BLT-lite hybrid optimizer
+34,BLT hybrid optimizer,0.7467870267874546,BAYESIAN_UPDATE,100.55845016302561,2.0,234.0,BLT-lite hybrid optimizer
+35,BLT hybrid optimizer,0.7467870267874546,BLT_REWARD_REGION,100.55845016302561,4.0,238.0,BLT-lite hybrid optimizer

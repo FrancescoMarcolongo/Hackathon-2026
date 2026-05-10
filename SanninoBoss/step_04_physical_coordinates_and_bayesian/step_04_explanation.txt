@@ -1,0 +1,299 @@
+STEP 4 - Physical coordinates, improved reward, Bayesian optimization
+====================================================================
+
+Contenuto della cartella
+------------------------
+Cartella: step_04_physical_coordinates_and_bayesian
+
+File Python:
+- two_points_with_noise.py
+  Algoritmo 2-points with noise normale, copiato e reso autonomo dallo step 3.
+- physical_coordinates_reward.py
+  Algoritmo 4A: coordinate fisiche + improved reward.
+- bayesian_physical_optimizer.py
+  Algoritmo 4B: Bayesian optimization in coordinate fisiche.
+- plot_step_04.py
+  Esegue i tre algoritmi necessari e produce le due figure finali.
+
+Figure prodotte:
+- figure_4A_physical_reward_vs_two_points_noise.png / .pdf
+- figure_4B_bayesian_vs_physical_reward.png / .pdf
+
+Figura 4A
+---------
+La figura 4A confronta:
+- 2-points with noise normale dello step 3;
+- 4A: physical coordinates + improved reward, sempre con noise.
+
+Asse x: epoch.
+Asse y: bias eta = T_Z/T_X.
+
+Entrambe le curve partono dallo stesso raw control iniziale e dallo stesso valore noisy iniziale di bias, circa 28.47.
+Il 2-points with noise normale entra nella target band alla epoca 24.
+Il metodo 4A entra nella target band alla epoca 12.
+
+Quindi la figura 4A mostra che coordinate fisiche + reward migliorata rendono l'ottimizzazione piu efficiente in presenza di noise.
+
+Figura 4B
+---------
+La figura 4B confronta:
+- 4A: physical coordinates + improved reward;
+- 4B: physical coordinates + improved reward + Bayesian optimization.
+
+Entrambe le curve usano lo stesso noisy two-point estimator, la stessa reward migliorata, gli stessi bounds, lo stesso target e lo stesso punto iniziale.
+Il 4A entra nella target band alla epoca 12.
+Il 4B entra nella target band alla epoca 6.
+
+Quindi la figura 4B mostra che la Bayesian optimization accelera ulteriormente la convergenza.
+
+2-points with noise normale
+---------------------------
+L'algoritmo normale e quello dello step 3:
+- raw controls: [Re(g2), Im(g2), Re(eps_d), Im(eps_d)];
+- CMA-ES separabile in coordinate raw;
+- noisy two-point estimator;
+- reward dello step 3.
+
+Parametri usati nel confronto:
+- epochs = 45
+- population = 8
+- sigma0 = 0.25
+- optimizer seed = 0
+- noise seed = 11
+- noise sigma = 0.03
+
+Coordinate fisiche
+------------------
+Il metodo 4A e 4B lavora internamente in:
+
+v = (log(kappa_2), log(|alpha|), theta_alpha, theta_g)
+
+con:
+
+kappa_2 = 4 |g2|^2 / kappa_b
+alpha = |alpha| exp(i theta_alpha)
+g2 = |g2| exp(i theta_g)
+
+La mappa da coordinate fisiche a raw controls e:
+
+|g2| = sqrt(kappa_b kappa_2 / 4)
+g2 = |g2| exp(i theta_g)
+epsilon_d = g2 alpha^2 + kappa_b kappa_a / (8 g2)
+
+La correzione su alpha e attiva, perche il codice baseline usa il termine kappa_a nella stima di alpha.
+
+Raw control iniziale comune:
+
+[1.0, 0.0, 2.5, 0.0]
+
+Coordinate fisiche corrispondenti:
+
+log(kappa_2) = -0.91629073
+log(|alpha|) = 0.11157178
+theta_alpha = 0.0
+theta_g = 0.0
+
+Raw bounds
+----------
+I raw bounds hard sono quelli degli step precedenti:
+
+Re(g2) in [0.25, 3.0]
+Im(g2) in [-1.0, 1.0]
+Re(eps_d) in [0.50, 8.0]
+Im(eps_d) in [-3.0, 3.0]
+
+Ogni candidato fisico viene rimappato in raw controls e viene scartato con reward finita bassa se viola questi bounds.
+
+Physical bounds
+---------------
+Bounds fisici usati:
+
+log(kappa_2) in [log(0.08), log(3.2)]
+log(|alpha|) in [log(0.65), log(2.45)]
+theta_alpha in [-pi, pi]
+theta_g in [-pi, pi]
+
+Improved reward
+---------------
+La reward migliorata usa errore logaritmico sul bias:
+
+e_eta = |log(eta / eta_target)|
+
+e penalizza solo l'eccesso fuori dalla banda target:
+
+bias_excess = max(0, e_eta - log(1 + 0.03))
+
+Formula:
+
+R =
+- w_eta * bias_excess^2
++ w_lifetime * [log(T_X + eps_T) + log(T_Z + eps_T)] / 2
+- w_fit * fit_penalty
+- floor_penalty
+
+Pesi finali:
+- target bias = 100
+- bias tolerance = 3%
+- w_eta = 260.0
+- w_lifetime = 0.70
+- w_fit = 1.0
+- w_floor = 9.0
+- min_tx = 0.05
+- min_tz = 5.0
+- invalid_reward = -1e6
+
+La reward privilegia prima il raggiungimento del bias target e poi, dentro o vicino alla target band, preferisce lifetime piu grandi.
+
+Noisy two-point estimator
+-------------------------
+L'estimator e identico allo step 3.
+Per ogni candidato:
+- si calcolano <X>(0), <X>(tau_x);
+- si calcolano <Z>(0), <Z>(tau_z);
+- si aggiunge noise solo al punto a tau;
+- si stima T con T = -tau / log(|y(tau) / y(0)|).
+
+Tau usati:
+- tau_x = 0.04067796841263771 us
+- tau_z = 22.033899307250977 us
+
+Noise model:
+- rumore gaussiano additivo su y(tau);
+- sigma = 0.03;
+- t = 0 non rumoroso;
+- clipping dei valori rumorosi in [-1, 1].
+
+Non sono stati introdotti drift, BLT o nuovi modelli di noise.
+
+Algoritmo 4A
+------------
+Il 4A usa CMA-ES separabile in coordinate fisiche.
+Ogni epoca valuta una popolazione di candidati fisici, li mappa in raw controls, applica lo stesso noisy two-point estimator e aggiorna l'incumbent con la improved reward.
+
+Parametri finali 4A:
+- epochs = 45
+- population = 8
+- sigma0 = 0.32
+- optimizer seed = 4
+- noise seed = 11
+- noise sigma = 0.03
+- alpha correction = attiva
+- prima epoca nella target band = 12
+
+Algoritmo 4B
+------------
+Il 4B usa lo stesso evaluator e la stessa reward del 4A.
+L'unica differenza e la selezione del candidato tramite Bayesian optimization.
+
+Rappresentazione GP:
+
+z(v) = (
+  log(kappa_2),
+  log(|alpha|),
+  sin(theta_alpha),
+  cos(theta_alpha),
+  sin(theta_g),
+  cos(theta_g)
+)
+
+scikit-learn non era disponibile nell'ambiente, quindi e stato implementato un GP leggero con NumPy/SciPy.
+
+Kernel:
+- Matern 5/2;
+- length_scale_logs = 0.35;
+- length_scale_phases = 0.70;
+- noise floor = 2.5e-4.
+
+Acquisition:
+- Upper Confidence Bound;
+- beta = 0.8.
+
+Candidate pool:
+- n_pool = 4096;
+- local_pool_fraction = 0.7;
+- local_scale_logs = 0.28;
+- local_scale_phases = 0.50;
+- candidati globali dentro bounds fisici ristretti intorno al punto iniziale;
+- candidati fuori raw bounds rigettati prima della valutazione costosa.
+
+Warm start:
+- n_init = 4;
+- include il punto iniziale comune;
+- i punti successivi sono perturbazioni fisiche locali plausibili.
+
+Parametri finali 4B:
+- epochs = 45
+- random seed = 9
+- noise seed = 11
+- noise sigma = 0.03
+- prima epoca nella target band = 6
+
+Sweep e selezione run finale
+----------------------------
+Per 4A e bastata la configurazione fisica stabile:
+- seed = 4
+- sigma0 = 0.32
+- population = 8
+
+Per 4B e stato fatto uno sweep leggero su:
+- random seed da 0 a 9;
+- beta in {0.4, 0.8, 1.2, 1.8};
+- n_init = 4;
+- n_pool = 4096.
+
+Criterio di scelta:
+- convergere al target piu velocemente del 4A;
+- evitare spike enormi che rovinano la leggibilita;
+- mantenere curva pulita e presentabile;
+- non modificare manualmente dati o curve.
+
+Una run con seed 5 e beta 1.2 raggiungeva il target ancora prima, ma generava overshoot molto grandi. E stata scartata.
+La run finale scelta e:
+
+seed = 9, beta = 0.8
+
+perche entra nella target band alla epoca 6 e resta pulita.
+
+Stile grafico
+-------------
+Lo stile e quello dello step 1:
+- font: DejaVu Sans;
+- title size: 13, semibold;
+- axis label size: 11;
+- tick label size: 9.5;
+- legend size: 9.5;
+- background bianco;
+- spines top/right rimossi;
+- asse e testo: #263238;
+- griglia: #D5DAE1, linewidth 0.75, alpha 0.72;
+- noisy normale: teal #008B8B;
+- physical/reward: blu #2563EB;
+- Bayesian: viola #6D3FB2;
+- target line: rosso #D1495B, dashed, linewidth 1.75;
+- target band: rosso #D1495B con alpha 0.085;
+- curve: linewidth 2.45;
+- marker vuoti, marker size 4.8, marker edge width 1.2;
+- legenda con frame bianco, alpha 0.94, bordo #E5E7EB;
+- DPI PNG: 320;
+- formato figura: 7.6 x 4.28 pollici;
+- output: PNG alta risoluzione e PDF vettoriale.
+
+Non ci sono commenti o annotazioni in basso a destra.
+Non e stato applicato smoothing o interpolazione.
+
+Come presentare oralmente
+-------------------------
+Figura 4A:
+"Partiamo dal 2-points noisy dello step 3, che converge ma lentamente. Se ottimizziamo in coordinate fisiche e usiamo una reward che premia sia il target bias sia lifetime grandi, la convergenza diventa molto piu efficiente: il target viene raggiunto a circa meta delle epoche."
+
+Figura 4B:
+"Ora teniamo identici estimator, noise, coordinate fisiche e reward, ma cambiamo il modo di scegliere il prossimo candidato. Con un surrogate bayesiano e una acquisition UCB, l'algoritmo trova la target band ancora prima, mostrando il valore della Bayesian optimization per ridurre il numero di epoche costose."
+
+Garanzie
+--------
+Le curve derivano da codice realmente eseguito.
+Non sono stati inventati dati.
+Non sono state disegnate curve finte.
+Non sono stati modificati manualmente i valori y.
+Non sono stati introdotti BLT o drift.
+Il noisy two-point estimator e quello dello step 3.

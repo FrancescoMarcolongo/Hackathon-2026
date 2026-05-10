@@ -1,0 +1,87 @@
+STEP 7 - drift tracking, pipeline v3
+
+Overview
+--------
+This folder implements the drift block of the updated pipeline v3:
+7A sinusoidal slow drift tracking with the old 4B Bayesian/TUrBO two-point optimizer;
+7B random band-limited drift tracking with the same old 4B optimizer plus Fourier spectrum;
+7C normalized tracking bandwidth, comparing Bayesian/TUrBO against BLT.
+
+Drift model
+-----------
+The drift is a small phenomenological amplitude drift on the drive/buffer control:
+  g2_eff(epoch) = g2_nominal * [1 + d(epoch)].
+The ideal compensation is therefore -d(epoch). The online wrapper converts the residual
+  residual = drift + learned_compensation
+into log-bias error through a calibrated local proxy for log(eta/eta_target). The algorithm does not receive the true drift directly; it updates compensation from the measured bias residual.
+
+No-drift convergence frequencies
+--------------------------------
+The old 4B Bayesian/TUrBO no-drift curve from the existing CSV enters the target band at n_conv = 6, so f_conv_4B = 0.166667 cycles/epoch.
+The BLT physical-coordinate based no-drift curve enters the target band at n_conv = 9, so f_conv_BLT = 0.111111 cycles/epoch.
+
+7A - Sinusoidal drift tracking
+------------------------------
+The drift is d(epoch) = A sin(2 pi f_drift epoch + phase), with A = 0.025, phase = 0.55, and f_drift = 0.015000. This is 0.090 times f_conv_4B, safely in the slow-drift regime. The plot shows true drift, ideal compensation, learned compensation, bias, target band, and RMS log tracking error. The first 12 epochs are marked as initial adaptation.
+After burn-in, RMS tracking error = 0.011563, and p_in_band = 1.000.
+
+7B - Band-limited random drift
+------------------------------
+The random drift is generated in Fourier space with seed 407; all coefficients above f_max = 0.025000 are set to zero, and the signal is normalized to amplitude 0.025. Since f_max / f_conv_4B = 0.150, the random signal satisfies f_max << f_conv_4B. The spectrum plot shows the Fourier amplitude, f_max, and f_conv_4B.
+After burn-in, RMS tracking error = 0.008207, and p_in_band = 1.000.
+
+7C - Normalized tracking bandwidth
+----------------------------------
+For each algorithm, the actual sinusoidal test frequency is computed as:
+  f_drift = normalized_frequency * f_conv_algorithm.
+The tested normalized frequencies are [0.05, 0.1, 0.25, 0.5, 0.7, 0.9, 1.0]. For each frequency and algorithm, the script runs 30 independent random seeds/phases and plots the mean RMS error with +/- one standard deviation. Each single run contains 180 epochs, and the RMS is computed after the burn-in window, so here it uses 168 post-burn-in epochs per run. The metric is
+  RMS[log(eta(epoch) / eta_target)]
+after burn-in. The secondary metric saved in the CSV is p_in_band, the fraction of post-burn-in epochs inside the 97-103 target band.
+
+At f_drift/f_conv = 1.00:
+  Bayesian/TUrBO mean RMS error = 0.042749 +/- 0.000075, mean p_in_band = 0.332.
+  BLT mean RMS error = 0.030746 +/- 0.000111, mean p_in_band = 0.481.
+This supports the presentation message: BLT has lower error in the near-band regime because the local/Jacobian update acts as a higher-bandwidth correction around the current incumbent.
+
+Seeds and parameters
+--------------------
+Bayesian/TUrBO tracking seed base = 1701.
+BLT tracking seed base = 2607.
+7C master seed for random phases/noise offsets = 90210; runs per frequency = 30.
+Tracking drift amplitude = 0.025.
+Bias target = 100.0; target band = 97-103.
+Burn-in for 7A and 7B = 12 epochs; burn-in for 7C is max(12, ceil(1.1 n_conv)).
+
+Files produced
+--------------
+figure_7A_sinusoidal_drift_tracking.png/pdf/csv
+figure_7B1_band_limited_drift_tracking.png/pdf/csv
+figure_7B2_band_limited_drift_spectrum.png/pdf/csv
+figure_7C_tracking_bandwidth.png/pdf/csv
+
+How to present it
+-----------------
+7A says: for a very slow sinusoidal environment drift, the old TUrBO two-point optimizer needs a short settling time and then tracks the ideal compensation, keeping the bias in band.
+7B says: the same logic works for any smooth random drift whose Fourier support is far below f_conv; the spectrum makes the bandwidth separation explicit.
+7C is the main message: after normalizing by each algorithm's own no-drift convergence frequency, BLT keeps lower RMS error closer to the near-band regime. The drift robustness is therefore not only a generic Bayesian effect; it comes from the BLT local update.
+
+7C physical spot-check
+----------------------
+After the proxy 7C sweep, a small physical validation was added. This is not a full Monte Carlo, but it does call the exact Lindblad two-point evaluator at every epoch.
+
+Frequencies tested: [0.25, 0.7, 1.0].
+Runs per point: 2.
+Epochs per run: 36.
+Burn-in excluded from RMS: 8 epochs.
+Post-burn-in epochs per run: 28.
+Evaluator: exact two-point Lindblad lifetimes, no added measurement noise, to isolate drift-tracking error from readout noise.
+
+The controls are statically re-centered so the exact no-drift bias is at the target before applying time-dependent drift:
+Bayesian/TUrBO static g2 compensation = 0.177557; signed sensitivity = -1.047212.
+BLT static g2 compensation = 0.039148; signed sensitivity = -1.833889.
+
+At f_drift/f_conv = 1.0 in this physical spot-check:
+Bayesian/TUrBO mean RMS = 0.020607.
+BLT mean RMS = 0.015757.
+
+Interpretation: this spot-check is the expensive sanity layer. It validates that the figure is no longer only a scalar proxy; however it should still be presented as a limited physical spot-check, because only three frequencies and 2 phases per point were evaluated.

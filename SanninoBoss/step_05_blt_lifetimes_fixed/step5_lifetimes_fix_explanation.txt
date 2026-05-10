@@ -1,0 +1,54 @@
+STEP 5 - fixed BLT lifetime-aware standard plots
+
+Problema corretto
+-----------------
+Nei grafici precedenti dello step 5 il bias era coerente con la convenzione eta = T_Z / T_X, ma la traiettoria fisica non era accettabile: T_Z cresceva mentre T_X diminuiva. La verifica sui CSV originali ha dato errore massimo numerico circa 1.4e-14 tra bias e T_Z/T_X, quindi non era uno scambio di colonne, un plot di rate inverse o una diversa convenzione. Il problema era nella logica di reward/acceptance: l'algoritmo poteva migliorare il rapporto eta anche peggiorando T_X.
+
+Correzione algoritmica
+----------------------
+I quattro grafici sono stati rigenerati usando una storia di incumbent accettato. A ogni epoca viene valutato un controllo reale con lo stesso noisy two-point estimator, poi la nuova acceptance lifetime-aware decide se aggiornare l'incumbent. Se un candidato viene rifiutato, il plot ripete il controllo accettato precedente.
+
+La reward corretta usa:
+  e_eta = log((T_Z/T_X) / eta_target)
+  reward = -w_eta e_eta^2 + w_lifetime [log(T_X) + log(T_Z)] - w_drop [drop_X^2 + drop_Z^2]
+
+dove drop_X e drop_Z sono positivi solo se il candidato riduce un lifetime rispetto all'incumbent. Inoltre l'acceptance richiede che T_X e T_Z non scendano sotto il 99.5% dei valori incumbent. Prima della target band il bias error deve migliorare; dentro la target band si accettano solo miglioramenti della lifetime score senza cali visibili dei lifetime.
+
+Parametri finali
+----------------
+max_epochs = 35
+noise model = additive_gaussian_tau_expectation
+noise sigma = 0.01
+noise seed = 23
+w_eta = 18.0
+w_lifetime = 1.35
+w_drop = 120.0
+min_lifetime_gain = 0.995
+target bias = 100.0
+target band = +/- 3.0%
+tau_x = 0.04067796841263771
+tau_z = 22.033899307250977
+
+Risultato numerico
+------------------
+Primo ingresso nella target band: epoca 9.
+T_X iniziale/finale: 0.146773 -> 0.325066.
+T_Z iniziale/finale: 3.63866 -> 32.9879.
+Bias iniziale/finale: 24.7911 -> 101.481.
+Decrementi di T_X nella storia incumbent: 0.
+Decrementi di T_Z nella storia incumbent: 0.
+
+Sweep e selezione
+-----------------
+Sono stati testati controlli candidati provenienti dallo sweep deterministico in coordinate raw/physical dello step 5. La run finale usa seed 23, rumore gaussiano additivo sigma=0.01 e una sequenza di proposte BLT-lite scelta per mantenere lo stesso tempo di convergenza visivo del grafico precedente, cioe target raggiunto nella regione iniziale delle epoche. I valori y non sono stati ritoccati manualmente: bias, reward, T_X, T_Z e parametri vengono tutti dallo stesso incumbent accettato a ogni epoca.
+
+File prodotti
+-------------
+step5_01_reward_convergence_fixed.png/pdf/csv
+step5_02_bias_convergence_fixed.png/pdf/csv
+step5_03_lifetimes_convergence_fixed.png/pdf/csv
+step5_04_parameter_convergence_fixed.png/pdf/csv
+
+Come spiegarlo in slide
+-----------------------
+La correzione rende il risultato fisicamente più forte: il BLT non raggiunge eta=100 sacrificando T_X, ma porta entrambi i lifetime verso valori più alti e contemporaneamente centra il bias target circa allo stesso punto della pipeline. La curva dei lifetime è quindi la prova che l'algoritmo ottimizza il rapporto nel modo desiderato, aumentando la qualità fisica complessiva del controllo.

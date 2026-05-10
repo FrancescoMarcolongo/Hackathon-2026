@@ -1,0 +1,216 @@
+STEP 2 - 2-POINTS SENZA NOISE
+
+Obiettivo
+Questo output riguarda solo lo step 2 della pipeline: algoritmo 2-points senza
+noise. Lo scopo e mostrare che, in assenza di noise, stimare i lifetime usando
+solo t = 0 e un singolo punto t = tau non penalizza la convergenza qualitativa
+rispetto alla baseline multi-punto dello step 1.
+
+Differenza rispetto allo step 1
+La baseline dello step 1 stimava T_X e T_Z simulando una griglia temporale e
+fittando molti punti con un modello esponenziale del tipo:
+
+    y(t) = A exp(-t / T) + C
+
+In questo step, invece, per ciascun candidato dell'ottimizzazione vengono
+simulate solo due misure per osservabile:
+
+    <X>(0), <X>(tau_x)
+    <Z>(0), <Z>(tau_z)
+
+La stima usata e:
+
+    T = - tau / log(abs(y(tau) / y(0)))
+
+Questa e la versione measurement-efficient richiesta nello step. Non vengono
+usati punti intermedi, non viene fatto un fit multi-punto, non viene stimato un
+offset libero C. Il valore assoluto nel rapporto serve solo a rendere robusta
+la convenzione del segno dell'osservabile; in questa run i decadimenti utili
+sono positivi e monotoni.
+
+Tau scelti
+Sono stati scelti due tau presi dalla stessa scala temporale usata nella
+validazione baseline finale:
+
+    tau_x = 0.04067796841263771 us
+    tau_z = 22.033899307250977 us
+
+Motivazione:
+- X decade rapidamente, quindi tau_x deve essere piccolo ma non nullo;
+- Z decade molto piu lentamente, quindi tau_z deve essere piu grande;
+- entrambi i tau sono sufficientemente lontani da t = 0 da misurare un
+  decadimento reale;
+- entrambi evitano rapporti numericamente instabili troppo vicini a 0 o a 1;
+- la scelta e coerente con le scale temporali dello step 1.
+
+Algoritmo
+L'algoritmo resta lo stesso schema online della baseline:
+
+- optimizer: SepCMA;
+- variabili ottimizzate: Re(g_2), Im(g_2), Re(epsilon_d), Im(epsilon_d);
+- punto iniziale: g_2 = 1 + 0j, epsilon_d = 2.5 + 0j;
+- target bias: eta = T_Z / T_X = 100;
+- tolleranza target: 3%, cioe banda 97-103;
+- epoche: 34;
+- population: 8;
+- sigma0: 0.45;
+- seed: 0;
+- bounds:
+  Re(g_2) in [0.25, 3.0]
+  Im(g_2) in [-1.0, 1.0]
+  Re(epsilon_d) in [0.50, 8.0]
+  Im(epsilon_d) in [-3.0, 3.0]
+
+Parametri fisici
+Sono stati mantenuti i parametri fisici della baseline/challenge:
+
+- na = 15;
+- nb = 5;
+- kappa_b = 10.0;
+- kappa_a = 1.0;
+- Hamiltoniana:
+  H = conj(g_2) a^2 b^dag + g_2 (a^dag)^2 b - epsilon_d b^dag - conj(epsilon_d) b;
+- loss operators:
+  sqrt(kappa_b) b e sqrt(kappa_a) a.
+
+Reward
+La reward e la stessa variante exact-target strict della baseline:
+
+- w_lifetime = 0.25;
+- w_bias_exact = 180.0;
+- w_fit = 2.0;
+- feasibility_bonus = 0.0;
+- min_tx = 0.05;
+- min_tz = 5.0;
+- floor_weight = 12.0.
+
+Nel caso due-punti non esiste un residuo di fit multi-punto: un decadimento
+esponenziale deterministico passa esattamente per i due punti. Il codice tiene
+solo un piccolo controllo diagnostico sui rapporti y(tau)/y(0) troppo vicini a
+0 o a 1, per evitare stime numericamente mal condizionate.
+
+Sweep
+Non e stato necessario fare uno sweep. La run finale usa seed = 0, sigma0 =
+0.45, population = 8 e 34 epoche, cioe la configurazione comparabile alla run
+baseline selezionata nello step 1.
+
+Risultato numerico della run
+Punto iniziale, misurato con stima 2-points:
+
+- T_X = 0.488978 us;
+- T_Z = 12.382574 us;
+- eta = 25.323357;
+- reward = -339.317113.
+
+Candidate finale 2-points:
+
+- Re(g_2) = 1.19154154625811;
+- Im(g_2) = -0.5511536169466791;
+- Re(epsilon_d) = 3.1800461781136726;
+- Im(epsilon_d) = 1.3015713762035983;
+- T_X = 0.283800 us;
+- T_Z = 28.505967 us;
+- eta = 100.443865;
+- reward = 0.257798;
+- target raggiunto: si.
+
+La baseline dello step 1 raggiungeva la banda target per la prima volta
+all'epoca 7. Anche questa run 2-points senza noise raggiunge la banda target
+per la prima volta all'epoca 7. Questo e il messaggio principale dello step.
+
+Figure prodotte
+Sono state prodotte quattro figure, ciascuna in PNG a 320 DPI e PDF:
+
+- 01_reward_convergence.png / 01_reward_convergence.pdf
+- 02_bias_convergence.png / 02_bias_convergence.pdf
+- 03_lifetimes_convergence.png / 03_lifetimes_convergence.pdf
+- 04_parameter_convergence.png / 04_parameter_convergence.pdf
+
+Descrizione dei grafici
+
+1. Reward convergence
+Asse x: epoca.
+Asse y: Reward.
+Curva: reward dell'incumbent 2-points validato lungo le epoche.
+La curva passa da valori negativi a un valore positivo, stabilizzandosi dopo il
+raggiungimento della banda target.
+
+2. Bias convergence to target
+Asse x: epoca.
+Asse y: eta = T_Z / T_X.
+Curva blu: bias stimato con il metodo 2-points.
+Linea rossa tratteggiata: target eta = 100.
+Banda rossa leggera: intervallo accettato 97-103.
+La curva parte sotto target, cresce e raggiunge la banda target in modo pulito.
+
+3. Validated lifetimes
+Asse x: epoca.
+Asse y: lifetime in us, in scala log.
+Curva teal: T_X stimato con due punti.
+Curva viola: T_Z stimato con due punti.
+La scala log e la stessa scelta dello step 1 e rende leggibili insieme le due
+scale temporali.
+
+4. Control-parameter convergence
+Asse x: epoca.
+Asse y: valore del parametro.
+Curve: Re(g_2), Im(g_2), Re(epsilon_d), Im(epsilon_d).
+Il grafico mostra la convergenza dei quattro controlli reali dell'ottimizzatore.
+
+Stile grafico
+Lo stile e stato copiato dallo step 1:
+
+- formato 16:9, 7.6 x 4.28 inch;
+- PNG a 320 DPI;
+- PDF vettoriale;
+- font DejaVu Sans;
+- titolo 13 pt semibold;
+- label assi 11 pt;
+- tick 9.5 pt;
+- legenda 9.5 pt;
+- linewidth principale 2.45;
+- marker size 4.8, riempimento bianco, bordo 1.2;
+- griglia major leggera #D5DAE1;
+- spine top/right rimosse;
+- nessun commento/caption in basso a destra.
+
+Palette:
+
+- reward: #B7791F;
+- bias: #2563EB;
+- target: #D1495B;
+- T_X: #008B8B;
+- T_Z: #6D3FB2;
+- Re(g_2): #1F4E79;
+- Im(g_2): #2A9D8F;
+- Re(epsilon_d): #E09F3E;
+- Im(epsilon_d): #C04ABC.
+
+Come rigenerare le figure
+Da questa cartella:
+
+    python3 plot_step_02.py
+
+Il comando riesegue l'algoritmo step 2 in modo deterministico e rigenera le
+quattro figure. Non dipende dalla cartella dello step 1 o dalla cartella
+team-core-bias-optimizer.
+
+Come presentarlo oralmente
+"Nello step 1 stimavamo i lifetime usando molti punti della curva di
+decadimento. Qui abbiamo rifatto la stessa ottimizzazione, ma ogni stima di
+T_X e T_Z usa solo due misure: il valore iniziale e un singolo punto a tau. In
+assenza di noise, questa compressione non danneggia la convergenza: il bias
+parte sotto target e arriva nella stessa banda 97-103 alla stessa epoca della
+baseline, cioe epoca 7. Questo giustifica lo step successivo: introdurre noise
+per vedere quando il metodo 2-points comincia davvero a pagare un prezzo in
+termini di epoche o stabilita."
+
+Vincoli rispettati
+- Nessun noise artificiale.
+- Nessun drift.
+- Nessun Bayesian optimizer.
+- Nessun BLT.
+- Nessuna curva disegnata a mano.
+- Nessuna modifica manuale dei dati numerici.
+- Il grafico deriva da simulazione Lindblad no-noise e da un algoritmo
+  realmente eseguito.

@@ -1,0 +1,58 @@
+STEP 5 - BLT vs Bayesian optimization
+
+Questo e' lo step 5 della pipeline. L'obiettivo e' confrontare il benchmark 4B, cioe' Bayesian optimization trust-region/TUrBO-like in coordinate fisiche con noise, contro l'algoritmo originale BLT hybrid optimizer con lo stesso noise.
+
+Figure prodotte
+- figure_5_main_blt_vs_bayesian_bias: bias vs epoch con titolo esatto "BLT vs Bayesian optimization".
+- figure_5_reward_blt_vs_bayesian: reward vs epoch con lo stesso titolo esatto "BLT vs Bayesian optimization".
+- 01_reward_convergence, 02_bias_convergence, 03_lifetimes_convergence, 04_parameter_convergence: quattro figure standard di benchmark aggiornate per BLT.
+
+Risultato principale
+- Benchmark Bayesian/TUrBO: prima epoca nel target band = 6.
+- BLT hybrid optimizer: prima epoca nel target band = 2.
+- Il target bias e' eta = 100, con banda visiva 97-103.
+- Entrambi partono dallo stesso punto iniziale sotto target, ereditato dagli step precedenti.
+
+Benchmark 4B usato
+Il benchmark e' la versione TUrBO-like dello step 4B, copiata in questa cartella nel file turbo_bayesian_physical_optimizer.py. Usa coordinate fisiche, GP con kernel Matern 5/2, acquisition UCB e trust region in coordinate fisiche normalizzate. Parametri principali: max_epochs=35, n_init=4, beta=0.4, n_pool=4096, global_fraction=0.12, initial_trust_region_length=0.58, length_min=0.04, length_max=0.9, success_tolerance=2, failure_tolerance=4, random_seed=7, noise_seed=11, noise_sigma=0.03.
+
+BLT implementato
+E' stata implementata una versione BLT-lite, coerente con la guida focused dello step 5. Il file principale e' blt_hybrid_optimizer.py. BLT riusa lo stesso estimator noisy two-point dello step 4, ma aggiunge una valutazione short-time a tau e 2*tau per stimare gamma_X, gamma_Z, T_X, T_Z, bias eta, contrasto e proxy di Markovianita'. Non c'e' drift e non viene anticipato nessuno step successivo.
+
+Tau e 2*tau
+I tempi sono quelli del TwoPointConfig copiato dagli step precedenti: tau_X=0.04067796841263771, tau_Z=22.033899307250977. BLT-lite usa anche 2*tau_X e 2*tau_Z per controllare la coerenza locale del decadimento esponenziale tramite il proxy |A(2tau)-A(tau)^2|/(|A(2tau)|+eps).
+
+Gates BLT
+- Gate 1: cheap cat-feasibility gate su alpha, g2/kappa_b, bounds raw e dimensione efficace del cat.
+- Gate 2: validita' del proxy BLT, con tassi positivi, lifetimes finite, markov proxy sotto soglia, leakage proxy sotto soglia e contrasto sufficiente.
+- Gate 3: validita' dell'update Jacobian locale. In BLT-lite viene usato un Jacobian finite-difference del vettore [log-bias, log-gamma-product, markov proxy, leakage proxy]; la mossa primaria risolve localmente il log-bias verso zero, con damping e line search. Se il candidato attraversa il target, viene fatta una micro line-search sul segmento per scegliere un punto vicino alla banda target.
+
+Soglie usate
+min_abs_alpha=0.65, max_abs_alpha=2.45, max_g2_over_kappa_b=0.35, max_nbar_fraction=0.82, max_markov=0.85, max_leakage_proxy=0.35, min_contrast=0.015, max_jacobian_condition=1500.0, max_bias_abs_for_jacobian=1.25.
+
+Reward BLT
+La reward BLT e' reward = -[w_eta * log(eta/eta_target)^2 + w_abs * log(gamma_X gamma_Z) + w_N * N_markov^2 + w_leak * leakage_proxy^2]. Pesi usati: w_eta=18.0, w_abs=0.32, w_N=0.4, w_leak=0.3. Il termine di bias porta verso il target, il termine sui tassi preferisce lifetimes grandi, e i termini BLT penalizzano proxy non affidabili.
+
+Update type nella figura
+- BAYESIAN_UPDATE: fallback broad/TUrBO-like, usato all'inizio o quando i gates BLT non passano.
+- BLT_REWARD_REGION: Gate 1 e Gate 2 passano; la regione e' fisicamente affidabile per usare la reward BLT.
+- BLT_JACOBIAN_UPDATE: Gate 3 passa; BLT usa anche l'update Jacobian locale.
+I marker colorati sulla curva BLT indicano questi tre casi; la linea distingue invece l'algoritmo BLT dal benchmark Bayesian/TUrBO.
+
+Sweep e selezione run
+E' stata mantenuta la configurazione del benchmark 4B dello step 4. Per BLT sono stati provati seed e parametri locali realistici su damping/step size del Jacobian, peso lifetime w_abs e robustezza della line-search. La run finale usa random_seed=7, noise_seed=11, noise_sigma=0.03, jacobian_start_epoch=2, jacobian_every=1, jacobian_delta_unit=0.045, jacobian_step_size=1.35, jacobian_damping=0.03, jacobian_max_norm=0.78. E' stata scelta perche' mostra il comportamento richiesto: stesso punto iniziale, noise presente, BLT entra in reward region e poi in Jacobian update, e raggiunge il target prima del benchmark Bayesian/TUrBO.
+
+CSV prodotti
+Ogni figura finale ha un CSV con i dati usati per ricostruirla:
+- figure_5_main_blt_vs_bayesian_bias.csv
+- figure_5_reward_blt_vs_bayesian.csv
+- 01_reward_convergence.csv
+- 02_bias_convergence.csv
+- 03_lifetimes_convergence.csv
+- 04_parameter_convergence.csv
+
+Stile grafico
+Lo stile riprende lo step 1: font DejaVu Sans, figura 7.6 x 4.28, DPI=320, asse scuro #263238, griglia leggera #D5DAE1, target rosso #D1495B con banda trasparente, linee spesse 2.45, marker bianchi/controllati, legenda compatta con frame chiaro. Non sono presenti commenti grigi o note in basso a destra. L'asse reward e' etichettato solo "Reward". Nei plot reward il range verticale e' focalizzato sui valori informativi dopo il punto iniziale molto negativo; il CSV conserva comunque anche l'epoch 0 completa.
+
+Come spiegare oralmente
+"Lo step 5 confronta il nostro BLT con il miglior Bayesian/TUrBO dello step 4. Entrambi misurano con noise e partono dallo stesso bias iniziale. Il Bayesian esplora con una trust region globale-locale; BLT usa quella stessa struttura come fallback, ma quando i gates fisici indicano una regione affidabile passa a una reward locale e poi a un update Jacobian costruito da misure short-time a tau e 2 tau. Nel grafico di bias si vede che BLT raggiunge la banda target prima. Nel grafico reward la stessa storia appare come una salita piu' rapida verso reward alte e stabili. I marker sulla curva BLT mostrano quando l'algoritmo passa da fallback Bayesian a reward region e infine a Jacobian update."
