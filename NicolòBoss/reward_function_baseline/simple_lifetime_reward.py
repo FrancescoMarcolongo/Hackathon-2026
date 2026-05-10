@@ -127,7 +127,7 @@ def cat_reward_from_lifetimes(Tx, Tz, eta_target=100.0, lambda_bias=2.0):
     bias_penalty = lambda_bias * (
         jnp.log((bias + eps) / eta_target)
     ) ** 2
-    reward = - bias_penalty
+    reward = lifetime_reward - bias_penalty
     return reward
 
 

@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.matplotlib-cache/
+runs/
+figures/
+results/
