@@ -171,12 +171,20 @@ def clear_measure_cache() -> None:
     _MEASURE_CACHE.clear()
 
 
-def _cache_key(g2: complex, eps_d: complex, cfg: SimulationConfig) -> Tuple[float, ...]:
+def _cache_key(
+    g2: complex,
+    eps_d: complex,
+    cfg: SimulationConfig,
+    storage_detuning: float = 0.0,
+    storage_kerr: float = 0.0,
+) -> Tuple[float, ...]:
     return (
         round(float(g2.real), 10),
         round(float(g2.imag), 10),
         round(float(eps_d.real), 10),
         round(float(eps_d.imag), 10),
+        round(float(storage_detuning), 10),
+        round(float(storage_kerr), 10),
         float(cfg.na),
         float(cfg.nb),
         float(cfg.kappa_b),
@@ -192,12 +200,14 @@ def measure_lifetimes(
     eps_d: complex,
     cfg: SimulationConfig,
     *,
+    storage_detuning: float = 0.0,
+    storage_kerr: float = 0.0,
     use_cache: bool = True,
     return_curves: bool = False,
 ) -> Dict[str, object]:
     """Return T_X, T_Z, bias, fit diagnostics, and optionally raw decay curves."""
 
-    key = _cache_key(g2, eps_d, cfg)
+    key = _cache_key(g2, eps_d, cfg, storage_detuning, storage_kerr)
     if use_cache and key in _MEASURE_CACHE:
         cached = dict(_MEASURE_CACHE[key])
         if return_curves and "curves" in cached:
@@ -223,6 +233,12 @@ def measure_lifetimes(
         - eps_d * b.dag()
         - jnp.conj(eps_d) * b
     )
+    if float(storage_detuning) != 0.0:
+        H = H + float(storage_detuning) * a.dag() @ a
+    if float(storage_kerr) != 0.0:
+        n_storage = a.dag() @ a
+        identity = dq.tensor(dq.eye(na), dq.eye(nb))
+        H = H - 0.5 * float(storage_kerr) * n_storage @ (n_storage - identity)
     loss_b = jnp.sqrt(cfg.kappa_b) * b
     loss_a = jnp.sqrt(cfg.kappa_a) * a
 
@@ -288,6 +304,8 @@ def measure_lifetimes(
         "g2_imag": float(g2.imag),
         "eps_d_real": float(eps_d.real),
         "eps_d_imag": float(eps_d.imag),
+        "storage_detuning": float(storage_detuning),
+        "storage_kerr": float(storage_kerr),
         "T_X": T_X,
         "T_Z": T_Z,
         "bias": bias,
@@ -344,6 +362,8 @@ def _invalid_result(reason: str, *, alpha_abs: float, cfg: SimulationConfig) -> 
         "g2_imag": np.nan,
         "eps_d_real": np.nan,
         "eps_d_imag": np.nan,
+        "storage_detuning": np.nan,
+        "storage_kerr": np.nan,
         "T_X": np.nan,
         "T_Z": np.nan,
         "bias": np.nan,
